@@ -1,2 +1,7 @@
+/src/.ipynb_checkpoints/GetCensusData-checkpoint.ipynb
 
 /src/web/node_modules/*
+
+/geckodriver.log
+
+/.ipynb_checkpoints
