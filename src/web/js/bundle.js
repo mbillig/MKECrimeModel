@@ -30,25 +30,25 @@ const parseLineRelative = (line) => {
 }
 
 const solveLeastSquaresCoefficients = (crimeMatrix) => {
+	// get length (cols) of crimeMatrix
     let A = math.eval('crimeMatrix[:, 1:8]', { crimeMatrix });
-    console.log("A");
-    console.log(A);
+    // console.log("A");
+    // console.log(A);
     let y = math.eval('crimeMatrix[:, 9]', { crimeMatrix })
-    console.log("y");
-    console.log(y);
+    // console.log("y");
+    // console.log(y);
     let betas = math.eval(`inv(A' * A) * A' * y`, { A, y });
     return betas;
 };
 
 const calculatedModeledCrime = (crimeMatrix, betas) => {
+	// get length (cols) of crimeMatrix
     let A = math.eval('crimeMatrix[:, 1:8]', { crimeMatrix });
     let model = math.eval('A * betas', { A, betas });
     return model;
 };
 
 const calculatePopulationDensity = (district) => { return district.Population / district.Area };
-//const calculateCrimeAreaDensity = (district) => { return district.TotalOffenses / district.Area };
-//const calculateCrimePopulationDensity = (district) => { return district.TotalOffenses / district.Population };
 
 const plotAxes = (xScale, yScale) => {
     //x-axis, District (sorted by actual crime)
@@ -131,66 +131,80 @@ const addCoefficientsToTable = (data) => {
         .text(function (d) { return d; });
 }
 
-d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, function (error, data) {
-    console.log(data);
-    let filteredData = data.filter(d =>
-        parseInt(d.Population) > 0 && (d.Type == "CensusTract"));
-    // console.log(filteredData);
-    let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, 11) });
-    // console.log(crimeMatrix);
-    let betas = solveLeastSquaresCoefficients(crimeMatrix);
-    let keys = data.columns.slice(2, 9);
-    keys.unshift("Base Crime");
+function update(){
+	d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, function (error, data) {
+		// console.log(data);
+		let filteredData = data.filter(d =>
+			parseInt(d.Population) > 0 && (d.Type == "CensusTract"));
+		// console.log(filteredData);
+		// only use cols that are selected via checkbox
+		if(d3.select("#populationCheckbox").property("checked")){
+			console.log('population selected')
+			//newData = data.filter(function(d,i){return d % 2 == 0;});
+		} else {
+			console.log('population deselected')
+			//newData = data;			
+		}	
+		let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, 11) });
+		// console.log(crimeMatrix);
+		let betas = solveLeastSquaresCoefficients(crimeMatrix);
+		let keys = data.columns.slice(2, 9);
+		keys.unshift("Base Crime");
 
-    console.log(keys);
-    // console.log(betas);
-    let modeledCrime = calculatedModeledCrime(crimeMatrix, betas).map(d => { return parseFloat(d) });
-    // console.log(modeledCrime);
+		// console.log(keys);
+		// console.log(betas);
+		let modeledCrime = calculatedModeledCrime(crimeMatrix, betas).map(d => { return parseFloat(d) });
+		// console.log(modeledCrime);
 
-    let toPlot = crimeMatrix.map((district, i) => {
-        let population = district[1];
-        let areaSqMi = district[2];
-        let actual = district[8];
-        let predicted = modeledCrime[i];
-        let error = 100 * ((predicted - actual) / actual);
-        return {
-            Population: population,
-            Area: areaSqMi,
-            ActualCrime: actual,
-            ModeledCrime: modeledCrime[i],
-            Error: error
-        }
-    });
+		let toPlot = crimeMatrix.map((district, i) => {
+			let population = district[1];
+			let areaSqMi = district[2];
+			let actual = district[8];
+			let predicted = modeledCrime[i];
+			let error = 100 * ((predicted - actual) / actual);
+			return {
+				Population: population,
+				Area: areaSqMi,
+				ActualCrime: actual,
+				ModeledCrime: modeledCrime[i],
+				Error: error
+			}
+		});
 
-    let sortedData = toPlot.sort((d1, d2) => {
-        return d1.ActualCrime > d2.ActualCrime ? 1 //concat to end
-            : d1.ActualCrime < d2.ActualCrime ? -1 //prepend to start
-                : 0; //equal
-    });
-    let sortedDataWithIndex = toPlot.map((district, i) => {
-        district.SortedOrder = i; //add number for order
-        return district;
-    })
+		let sortedData = toPlot.sort((d1, d2) => {
+			return d1.ActualCrime > d2.ActualCrime ? 1 //concat to end
+				: d1.ActualCrime < d2.ActualCrime ? -1 //prepend to start
+					: 0; //equal
+		});
+		let sortedDataWithIndex = toPlot.map((district, i) => {
+			district.SortedOrder = i; //add number for order
+			return district;
+		})
 
-    console.log(sortedDataWithIndex);
+		//console.log(sortedDataWithIndex);
 
-    let averageError = 0;
-    toPlot.forEach((district) => {
-        averageError += district.Error;
-    });
-    averageError /= toPlot.length;
+		let averageError = 0;
+		toPlot.forEach((district) => {
+			averageError += district.Error;
+		});
+		averageError /= toPlot.length;
 
-    console.log(averageError);
+		console.log(averageError);
 
-    plotActualCrimePerPopulationDensity(svg, sortedDataWithIndex);
-    let tableData = keys.map((key, index) => { return { Key: key, Value: betas[index] }; });
-    addCoefficientsToTable(tableData);
-})
+		plotActualCrimePerPopulationDensity(svg, sortedDataWithIndex);
+		let tableData = keys.map((key, index) => { return { Key: key, Value: betas[index] }; });
+		addCoefficientsToTable(tableData);
+	})
+}
 
-
-
-
-
+update();
+d3.select("#populationCheckbox").on("change", update);
+d3.select("#areaCheckbox").on("change", update);
+d3.select("#age18to25Checkbox").on("change", update);
+d3.select("#maleCheckbox").on("change", update);
+d3.select("#liquorCheckbox").on("change", update);
+d3.select("#faithOrgsCheckbox").on("change", update);
+d3.select("#parksCheckbox").on("change", update);
 },{"js-regression":7,"mathjs":10}],2:[function(require,module,exports){
 /**
  * @license Complex.js v2.0.3 11/02/2016
