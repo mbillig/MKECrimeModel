@@ -24,26 +24,26 @@ const parseLineRelative = (line) => {
         PopulationMale: parseFloat(line["% Male"]),
         LiquorLisc: parseFloat(line["Liquor Licenses/Sq. Mi."]),
         FaithOrgs: parseFloat(line["Faith Orgs/Sq. Mi."]),
-        Parks: parseFloat(line["Parks/Sq. Mi."]),
+		Parks: parseFloat(line["Parks/Sq. Mi."]),
+		ResValue: parseFloat(line["Avg Residential Value"]),
         TotalOffenses: parseInt(line["Total Offenses"])
     }
 }
 
 const solveLeastSquaresCoefficients = (crimeMatrix) => {
-	// get length (cols) of crimeMatrix
-    let A = math.eval('crimeMatrix[:, 1:8]', { crimeMatrix });
-    // console.log("A");
-    // console.log(A);
-    let y = math.eval('crimeMatrix[:, 9]', { crimeMatrix })
-    // console.log("y");
-    // console.log(y);
+	var nPredictorCols = crimeMatrix[0].length - 1;
+	var iActualsCol = crimeMatrix[0].length;
+
+	let A = math.eval('crimeMatrix[:, 1:' + nPredictorCols + ']', { crimeMatrix });
+	let y = math.eval('crimeMatrix[:, ' + iActualsCol + ']', { crimeMatrix })
+
     let betas = math.eval(`inv(A' * A) * A' * y`, { A, y });
     return betas;
 };
 
 const calculatedModeledCrime = (crimeMatrix, betas) => {
-	// get length (cols) of crimeMatrix
-    let A = math.eval('crimeMatrix[:, 1:8]', { crimeMatrix });
+	var nPredictorCols = crimeMatrix[0].length - 1;
+    let A = math.eval('crimeMatrix[:, 1:' + nPredictorCols + ']', { crimeMatrix });
     let model = math.eval('A * betas', { A, betas });
     return model;
 };
@@ -121,30 +121,12 @@ const plotActualCrimePerPopulationDensity = (data) => {
 
     var errorBars = datapoints.enter()
         .append("line")
-            .style("stroke", "gray") // Add a color
+        .style("stroke", "gray") // Add a color
         .attr("x1", (d) => disctrictNumScale(d.SortedOrder))
         .attr("y1", (d) => crimeScale(d.ActualCrime))
         .attr("x2", (d) => disctrictNumScale(d.SortedOrder))
         .attr("y2", (d) => crimeScale(d.ModeledCrime));
 
-    // data.map((district) => {
-    //     svg.append("circle")
-
-    // });
-
-    //     svg.append("circle")
-    //         .attr("cx", disctrictNumScale(district.SortedOrder))
-    //         .attr("cy", crimeScale(district.ModeledCrime))
-    //         .attr("r", 2.5)
-    //         .style("fill", "FFA500");
-
-    //     svg.append("line")
-    //         .style("stroke", "gray") // Add a color
-    //         .attr("x1", disctrictNumScale(district.SortedOrder))
-    //         .attr("y1", crimeScale(district.ActualCrime))
-    //         .attr("x2", disctrictNumScale(district.SortedOrder))
-    //         .attr("y2", crimeScale(district.ModeledCrime));
-    // })
 
     plotAxes(disctrictNumScale, crimeScale);
 }
@@ -167,34 +149,43 @@ const addCoefficientsToTable = (data) => {
 }
 
 function update(){
+	svg.selectAll("*").remove();
 	d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, function (error, data) {
 		// console.log(data);
 		let filteredData = data.filter(d =>
 			parseInt(d.Population) > 0 && (d.Type == "CensusTract"));
-		// console.log(filteredData);
-		// only use cols that are selected via checkbox
-		if(d3.select("#populationCheckbox").property("checked")){
-			console.log('population selected')
-			//newData = data.filter(function(d,i){return d % 2 == 0;});
-		} else {
-			console.log('population deselected')
-			//newData = data;			
-		}	
-		let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, 11) });
-		// console.log(crimeMatrix);
-		let betas = solveLeastSquaresCoefficients(crimeMatrix);
-		let keys = data.columns.slice(2, 9);
-		keys.unshift("Base Crime");
 
-		// console.log(keys);
+		if(!d3.select("#populationCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.Population }); }
+		if(!d3.select("#areaCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.areaSqMi }); }
+		if(!d3.select("#age18to24Checkbox").property("checked")){ filteredData.forEach(function(v){ delete v.Pop18To24 }); }
+		if(!d3.select("#maleCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.PopulationMale }); }
+		if(!d3.select("#liquorCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.LiquorLisc }); }
+		if(!d3.select("#faithOrgsCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.FaithOrgs }); }
+		if(!d3.select("#parksCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.Parks }); }
+		if(!d3.select("#resValueCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.ResValue }); }
+
+		//console.log("filtered data after processing")
+		//console.log(filteredData);
+
+		var nCols = filteredData[0].length
+		let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, nCols) });
+		let betas = solveLeastSquaresCoefficients(crimeMatrix);
+		let keys = Object.getOwnPropertyNames(filteredData[0]);
+		keys.shift();
+		keys.shift();
+		keys.pop();
+
+		console.log(keys);
 		// console.log(betas);
 		let modeledCrime = calculatedModeledCrime(crimeMatrix, betas).map(d => { return parseFloat(d) });
 		// console.log(modeledCrime);
 
 		let toPlot = crimeMatrix.map((district, i) => {
+			// TODO: THIS IS A PROBLEM IF POPULATION OR AREA ARE DESELECTED FROM THE CHECKBOXES
 			let population = district[1];
 			let areaSqMi = district[2];
-			let actual = district[8];
+			var nCols = district.length - 1 ;
+			let actual = district[nCols];
 			let predicted = modeledCrime[i];
 			let error = 100 * ((predicted - actual) / actual);
 			return {
@@ -226,7 +217,7 @@ function update(){
 
 		console.log(averageError);
 
-    plotActualCrimePerPopulationDensity(sortedDataWithIndex);
+    	plotActualCrimePerPopulationDensity(sortedDataWithIndex);
 		let tableData = keys.map((key, index) => { return { Key: key, Value: betas[index] }; });
 		addCoefficientsToTable(tableData);
 	})
@@ -240,6 +231,8 @@ d3.select("#maleCheckbox").on("change", update);
 d3.select("#liquorCheckbox").on("change", update);
 d3.select("#faithOrgsCheckbox").on("change", update);
 d3.select("#parksCheckbox").on("change", update);
+d3.select("#resValueCheckbox").on("change", update);
+
 },{"js-regression":7,"mathjs":10}],2:[function(require,module,exports){
 /**
  * @license Complex.js v2.0.3 11/02/2016
