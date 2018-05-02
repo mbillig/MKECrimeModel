@@ -267,7 +267,7 @@ function update() {
 update();
 d3.select("#populationCheckbox").on("change", update);
 d3.select("#areaCheckbox").on("change", update);
-d3.select("#age18to25Checkbox").on("change", update);
+d3.select("#age18to24Checkbox").on("change", update);
 d3.select("#maleCheckbox").on("change", update);
 d3.select("#liquorCheckbox").on("change", update);
 d3.select("#faithOrgsCheckbox").on("change", update);
