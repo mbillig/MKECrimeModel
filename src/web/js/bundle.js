@@ -19,23 +19,23 @@ const parseLineRelative = (line) => {
         Type: line["Type"],
         Base: 1,
         Population: parseInt(line["Population"]),
-        Area: parseFloat(line["Area sqmi"]),
-        Pop18To24: parseFloat(line["18 to 24"]),
-        PopulationMale: parseFloat(line["Male"]),
-        LiquorLisc: parseFloat(line["Liquor Licenses"]),
-        FaithOrgs: parseFloat(line["Faith Orgs"]),
-        Parks: parseFloat(line["Parks"]),
-        TotalOffenses: parseInt(line["Total A Offenses"])
+        Area: parseFloat(line["Area (Sq. Mile)"]),
+        Pop18To24: parseFloat(line["% Pop 18 to 24"]),
+        PopulationMale: parseFloat(line["% Male"]),
+        LiquorLisc: parseFloat(line["Liquor Licenses/Sq. Mi."]),
+        FaithOrgs: parseFloat(line["Faith Orgs/Sq. Mi."]),
+        Parks: parseFloat(line["Parks/Sq. Mi."]),
+        TotalOffenses: parseInt(line["Total Offenses"])
     }
 }
 
 const solveLeastSquaresCoefficients = (crimeMatrix) => {
     let A = math.eval('crimeMatrix[:, 1:8]', { crimeMatrix });
-    //console.log("A");
-    //console.log(A);
+    console.log("A");
+    console.log(A);
     let y = math.eval('crimeMatrix[:, 9]', { crimeMatrix })
-    //console.log("y");
-    //console.log(y);
+    console.log("y");
+    console.log(y);
     let betas = math.eval(`inv(A' * A) * A' * y`, { A, y });
     return betas;
 };
@@ -112,7 +112,24 @@ const plotActualCrimePerPopulationDensity = (svg, data) => {
     plotAxes(disctrictNumScale, crimeScale);
 }
 
-d3.csv("data/AggregateData/AggregateRelative.csv", parseLineRelative, function (error, data) {
+const addCoefficientsToTable = (data) => {
+    rows = d3.select("table") // UPDATE
+        .selectAll("tbody")
+        .selectAll("tr")
+        .data(data);
+
+    rows.exit().remove(); // EXIT
+
+    rows.enter() //ENTER + UPDATE
+        .append('tr')
+        .selectAll("td")
+        .data(function (d) { return [d.Key, d.Value]; })
+        .enter()
+        .append("td")
+        .text(function (d) { return d; });
+}
+
+d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, function (error, data) {
     console.log(data);
     let filteredData = data.filter(d =>
         parseInt(d.Population) > 0 && (d.Type == "CensusTract"));
@@ -120,6 +137,10 @@ d3.csv("data/AggregateData/AggregateRelative.csv", parseLineRelative, function (
     let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, 11) });
     // console.log(crimeMatrix);
     let betas = solveLeastSquaresCoefficients(crimeMatrix);
+    let keys = data.columns.slice(2, 9);
+    keys.unshift("Base Crime");
+
+    console.log(keys);
     // console.log(betas);
     let modeledCrime = calculatedModeledCrime(crimeMatrix, betas).map(d => { return parseFloat(d) });
     // console.log(modeledCrime);
@@ -140,12 +161,12 @@ d3.csv("data/AggregateData/AggregateRelative.csv", parseLineRelative, function (
     });
 
     let sortedData = toPlot.sort((d1, d2) => {
-        return d1.ActualCrime > d2.ActualCrime ? 1
-            : d1.ActualCrime < d2.ActualCrime ? -1
-                : 0;
+        return d1.ActualCrime > d2.ActualCrime ? 1 //concat to end
+            : d1.ActualCrime < d2.ActualCrime ? -1 //prepend to start
+                : 0; //equal
     });
     let sortedDataWithIndex = toPlot.map((district, i) => {
-        district.SortedOrder = i;
+        district.SortedOrder = i; //add number for order
         return district;
     })
 
@@ -160,6 +181,8 @@ d3.csv("data/AggregateData/AggregateRelative.csv", parseLineRelative, function (
     console.log(averageError);
 
     plotActualCrimePerPopulationDensity(svg, sortedDataWithIndex);
+    let tableData = keys.map((key, index) => { return { Key: key, Value: betas[index] }; });
+    addCoefficientsToTable(tableData);
 })
 
 
