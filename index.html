@@ -22,11 +22,11 @@
 			background-color: #adadad;
 			text-indent: 20px;
 		}
-	container {
-		width: 80%;
-		margin: auto;
-		padding: 4px;
-		overflow: hidden;
+		container {
+			width: 80%;
+			margin: auto;
+			padding: 4px;
+			overflow: hidden;
 		}
 	</style>
 </head>
@@ -42,13 +42,14 @@
 		<svg id="crimeApprox" height="700" width="1000" margin-left="-80px"> </svg>
 	</div>
 <div class="container">
-	<input type="checkbox" id="myCheckbox"> Test
-	<input type="checkbox" id="myCheckbox"> Test
-	<input type="checkbox" id="myCheckbox"> Test
-	<input type="checkbox" id="myCheckbox"> Test
-	<input type="checkbox" id="myCheckbox"> Test
-	<input type="checkbox" id="myCheckbox"> Test
-	<input type="checkbox" id="myCheckbox"> Test
+	<label>Select variables to include in the model</label><br>
+	<input type="checkbox" id="populationCheckbox" margin="20px" checked > Population <br>
+	<input type="checkbox" id="areaCheckbox" checked> Area (sq miles)<br>
+	<input type="checkbox" id="age18to24Checkbox" checked> Percent 18 to 24<br>
+	<input type="checkbox" id="maleCheckbox" checked> Percent Male<br>
+	<input type="checkbox" id="liquorCheckbox" checked> Liquor Licenses (per area)<br>
+	<input type="checkbox" id="faithOrgsCheckbox" checked> Faith Organizations (per area)<br>
+	<input type="checkbox" id="parksCheckbox"checked> Parks (per area)<br><br><br>
 
 	<div>
 		<table class="table" width="900">
