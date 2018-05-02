@@ -17,7 +17,7 @@ const parseLineRelative = (line) => {
         District: parseInt(line["District"]),
         Type: line["Type"],
         Base: 1,
-        Population: parseInt(line["Population"]),
+        Population: parseFloat(line["Population"]),
         Area: parseFloat(line["Area (Sq. Mile)"]),
         Pop18To24: parseFloat(line["% Pop 18 to 24"]),
         PopulationMale: parseFloat(line["% Male"]),
@@ -36,14 +36,14 @@ const solveLeastSquaresCoefficients = (crimeMatrix) => {
 	let A = math.eval('crimeMatrix[:, 1:' + nPredictorCols + ']', { crimeMatrix });
 	let y = math.eval('crimeMatrix[:, ' + iActualsCol + ']', { crimeMatrix })
 
-    let betas = math.eval(`inv(A' * A) * A' * y`, { A, y });
+	let betas = math.eval(`inv(A' * A) * A' * y`, { A, y });
     return betas;
 };
 
 const calculatedModeledCrime = (crimeMatrix, betas) => {
 	var nPredictorCols = crimeMatrix[0].length - 1;
     let A = math.eval('crimeMatrix[:, 1:' + nPredictorCols + ']', { crimeMatrix });
-    let model = math.eval('A * betas', { A, betas });
+	let model = math.eval('A * betas', { A, betas });
     return model;
 };
 
@@ -170,9 +170,9 @@ function update(){
 		let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, nCols) });
 		let betas = solveLeastSquaresCoefficients(crimeMatrix);
 		let keys = Object.getOwnPropertyNames(filteredData[0]);
-		keys.shift();
-		keys.shift();
-		keys.pop();
+		keys.shift(); // get rid of district number
+		keys.shift(); // get rid of district type
+		keys.pop(); // get rid of actuals
 
 		console.log(keys);
 		// console.log(betas);
@@ -186,6 +186,7 @@ function update(){
 			var nCols = district.length - 1 ;
 			let actual = district[nCols];
 			let predicted = modeledCrime[i];
+			// console.log(modeledCrime);
 			let error = 100 * ((predicted - actual) / actual);
 			return {
 				Population: population,
@@ -195,6 +196,7 @@ function update(){
 				Error: error
 			}
 		});
+
 
 		let sortedData = toPlot.sort((d1, d2) => {
 			return d1.ActualCrime > d2.ActualCrime ? 1 //concat to end
