@@ -47,6 +47,8 @@ const calculatedModeledCrime = (crimeMatrix, betas) => {
 };
 
 const calculatePopulationDensity = (district) => { return district.Population / district.Area };
+//const calculateCrimeAreaDensity = (district) => { return district.TotalOffenses / district.Area };
+//const calculateCrimePopulationDensity = (district) => { return district.TotalOffenses / district.Population };
 
 const plotAxes = (xScale, yScale) => {
     //x-axis, District (sorted by actual crime)

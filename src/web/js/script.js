@@ -29,6 +29,7 @@ const parseLineRelative = (line) => {
 }
 
 const solveLeastSquaresCoefficients = (crimeMatrix) => {
+	// get length (cols) of crimeMatrix
     let A = math.eval('crimeMatrix[:, 1:8]', { crimeMatrix });
     console.log("A");
     console.log(A);
@@ -40,6 +41,7 @@ const solveLeastSquaresCoefficients = (crimeMatrix) => {
 };
 
 const calculatedModeledCrime = (crimeMatrix, betas) => {
+	// get length (cols) of crimeMatrix
     let A = math.eval('crimeMatrix[:, 1:8]', { crimeMatrix });
     let model = math.eval('A * betas', { A, betas });
     return model;
@@ -132,7 +134,8 @@ d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, fun
     console.log(data);
     let filteredData = data.filter(d =>
         parseInt(d.Population) > 0 && (d.Type == "CensusTract"));
-    // console.log(filteredData);
+	// console.log(filteredData);
+	// only use cols that are selected via checkbox
     let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, 11) });
     // console.log(crimeMatrix);
     let betas = solveLeastSquaresCoefficients(crimeMatrix);
