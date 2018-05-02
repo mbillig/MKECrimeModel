@@ -113,7 +113,15 @@ const plotActualCrimePerPopulationDensity = (data) => {
     var datapoints = vis.selectAll('circle')
         .data(data, (d) => { return d; })
 
-    var modeled = datapoints.enter() //add modeled data points
+	var errorBars = datapoints.enter()
+        .append("line")
+        .style("stroke", "gray") // Add a color
+        .attr("x1", (d) => disctrictNumScale(d.SortedOrder))
+        .attr("y1", (d) => crimeScale(d.ActualCrime))
+        .attr("x2", (d) => disctrictNumScale(d.SortedOrder))
+        .attr("y2", (d) => crimeScale(d.ModeledCrime));
+
+    var modeled = datapoints.enter()
         .append('circle')
         .attr('r', 2.5)
         .attr('cx', (d) => disctrictNumScale(d.SortedOrder))
@@ -132,18 +140,8 @@ const plotActualCrimePerPopulationDensity = (data) => {
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide)
 
-    var errorBars = datapoints.enter() //add error lines
-        .append("line")
-        .style("stroke", "gray") // Add a color
-        .attr("x1", (d) => disctrictNumScale(d.SortedOrder))
-        .attr("y1", (d) => crimeScale(d.ActualCrime))
-        .attr("x2", (d) => disctrictNumScale(d.SortedOrder))
-        .attr("y2", (d) => crimeScale(d.ModeledCrime));
-
-    if (!axesExist) {
         plotAxes(disctrictNumScale, crimeScale);
         axesExist = true;
-    }
 }
 
 const addCoefficientsToTable = (data) => {
@@ -171,14 +169,26 @@ const addCoefficientsToTable = (data) => {
 
 function update() {
     svg.selectAll("circle").filter(".model").remove();
-    svg.selectAll("line").remove();
+	svg.selectAll("line").remove();
+	svg.selectAll("*").remove(); //otherwise the axes end looking weird af
     d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, function (error, data) {
         // console.log(data);
         let filteredData = data.filter(d =>
             parseInt(d.Population) > 0 && (d.Type == "CensusTract"));
 
+		var selectedMeans = [];
+		if(d3.select("#populationCheckbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.Population; })) }
+		if(d3.select("#areaCheckbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.Area; })) }
+		if(d3.select("#age18to24Checkbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.Pop18To24; })) }
+		if(d3.select("#maleCheckbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.PopulationMale; })) }
+		if(d3.select("#liquorCheckbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.LiquorLisc; })) }
+		if(d3.select("#faithOrgsCheckbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.FaithOrgs; })) }
+		if(d3.select("#parksCheckbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.Parks; })) }
+		if(d3.select("#resValueCheckbox").property("checked")){ selectedMeans.push(d3.mean(filteredData, function(d) { return d.ResValue; })) }
+		//console.log(selectedMeans);
+
         if (!d3.select("#populationCheckbox").property("checked")) { filteredData.forEach(function (v) { delete v.Population }); }
-        if (!d3.select("#areaCheckbox").property("checked")) { filteredData.forEach(function (v) { delete v.areaSqMi }); }
+		if(!d3.select("#areaCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.Area }); }
         if (!d3.select("#age18to24Checkbox").property("checked")) { filteredData.forEach(function (v) { delete v.Pop18To24 }); }
         if (!d3.select("#maleCheckbox").property("checked")) { filteredData.forEach(function (v) { delete v.PopulationMale }); }
         if (!d3.select("#liquorCheckbox").property("checked")) { filteredData.forEach(function (v) { delete v.LiquorLisc }); }
@@ -197,10 +207,21 @@ function update() {
         keys.shift(); // get rid of district type
         keys.pop(); // get rid of actuals
 
-        console.log(keys);
-        // console.log(betas);
+		
+		var weightedBetas = [];
+		for (var i = 1; i < betas.length; i++){
+			weightedBetas.push(betas[i] * selectedMeans[i-1]);
+		}
+
+		console.log(betas);
+		console.log(selectedMeans);
+		console.log('weighted betas');
+		console.log(weightedBetas);
+		//d3.mean(filteredData, function(d) { return d.Population; })
+		var iMax = weightedBetas.indexOf(Math.max(...weightedBetas));
+		console.log(iMax);
+
         let modeledCrime = calculatedModeledCrime(crimeMatrix, betas).map(d => { return parseFloat(d) });
-        // console.log(modeledCrime);
 
         let toPlot = crimeMatrix.map((district, i) => {
             var nCols = district.length - 1;
@@ -217,8 +238,8 @@ function update() {
 
 
         let sortedData = toPlot.sort((d1, d2) => {
-            return d1.ActualCrime > d2.ActualCrime ? 1 //concat to end
-                : d1.ActualCrime < d2.ActualCrime ? -1 //prepend to start
+			return d1.Area > d2.Area ? 1 //concat to end
+				: d1.Area < d2.Area ? -1 //prepend to start
                     : 0; //equal
         });
         let sortedDataWithIndex = toPlot.map((district, i) => {
