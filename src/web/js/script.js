@@ -74,39 +74,74 @@ const plotAxes = (xScale, yScale) => {
 
 }
 
-const plotActualCrimePerPopulationDensity = (svg, data) => {
+const plotActualCrimePerPopulationDensity = (data) => {
     let disctrictNumExtent = d3.extent(data, (district) => { return district.SortedOrder; });
     let disctrictNumScale = d3.scaleLinear()
         .domain(disctrictNumExtent)
         .range([xPadding, width - xPadding]);
-
-    console.log(disctrictNumExtent);
 
     let actualCrimeExtent = d3.extent(data, (district) => { return district.ActualCrime; });
     let crimeScale = d3.scaleLinear()
         .domain(actualCrimeExtent)
         .range([height - yPadding, yPadding]);
 
-    data.map((district) => {
-        svg.append("circle")
-            .attr("cx", disctrictNumScale(district.SortedOrder))
-            .attr("cy", crimeScale(district.ActualCrime))
-            .attr("r", 2)
-            .style("fill", "45B3E7");
+    var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .html(function (d) { return "hello" })
+        .direction('n')
+        .offset([-3, 0])
 
-        svg.append("circle")
-            .attr("cx", disctrictNumScale(district.SortedOrder))
-            .attr("cy", crimeScale(district.ModeledCrime))
-            .attr("r", 2)
-            .style("fill", "FFA500");
+    var vis = svg.append('g')
+        .attr('transform', 'translate(20, 20)')
+        .call(tip)
 
-        svg.append("line")
-            .style("stroke", "gray") // Add a color
-            .attr("x1", disctrictNumScale(district.SortedOrder))
-            .attr("y1", crimeScale(district.ActualCrime))
-            .attr("x2", disctrictNumScale(district.SortedOrder))
-            .attr("y2", crimeScale(district.ModeledCrime));
-    })
+    var datapoints = vis.selectAll('circle')
+        .data(data, (d) => { return d; })
+
+    var modeled = datapoints.enter()
+        .append('circle')
+        .attr('r', 2.5)
+        .attr('cx', (d) => disctrictNumScale(d.SortedOrder))
+        .attr('cy', (d) => crimeScale(d.ModeledCrime))
+        .style("fill", "FFA500")
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide)
+
+    var actuals = datapoints.enter()
+        .append('circle')
+        .attr("cx", (d) => disctrictNumScale(d.SortedOrder))
+        .attr("cy", (d) => crimeScale(d.ActualCrime))
+        .attr("r", 2.5)
+        .style("fill", "45B3E7")
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide)
+
+    var errorBars = datapoints.enter()
+        .append("line")
+        .style("stroke", "gray") // Add a color
+        .attr("x1", (d) => disctrictNumScale(d.SortedOrder))
+        .attr("y1", (d) => crimeScale(d.ActualCrime))
+        .attr("x2", (d) => disctrictNumScale(d.SortedOrder))
+        .attr("y2", (d) => crimeScale(d.ModeledCrime));
+
+    // data.map((district) => {
+    //     svg.append("circle")
+
+    // });
+
+    //     svg.append("circle")
+    //         .attr("cx", disctrictNumScale(district.SortedOrder))
+    //         .attr("cy", crimeScale(district.ModeledCrime))
+    //         .attr("r", 2.5)
+    //         .style("fill", "FFA500");
+
+    //     svg.append("line")
+    //         .style("stroke", "gray") // Add a color
+    //         .attr("x1", disctrictNumScale(district.SortedOrder))
+    //         .attr("y1", crimeScale(district.ActualCrime))
+    //         .attr("x2", disctrictNumScale(district.SortedOrder))
+    //         .attr("y2", crimeScale(district.ModeledCrime));
+    // })
 
     plotAxes(disctrictNumScale, crimeScale);
 }
@@ -179,7 +214,7 @@ d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, fun
 
     console.log(averageError);
 
-    plotActualCrimePerPopulationDensity(svg, sortedDataWithIndex);
+    plotActualCrimePerPopulationDensity(sortedDataWithIndex);
     let tableData = keys.map((key, index) => { return { Key: key, Value: betas[index] }; });
     addCoefficientsToTable(tableData);
 })
