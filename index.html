@@ -25,6 +25,7 @@
 			background-color: #adadad;
 			text-indent: 20px;
 		}
+
 		container {
 			width: 80%;
 			margin: auto;
@@ -38,45 +39,56 @@
 
 	<header>
 		<h1>Milwaukee Crime Model</h1>
-		<h3>Allowing users to choose which variables will create a crime forecast.</h3>
+		<h3>Visualizing what parameters can be used to forecast total crime in an area</h3>
 	</header>
 
 	<div class="container">
 		<svg id="crimeApprox" height="700" width="1000"> </svg>
 	</div>
 	<div class="container">
-		<label>Select variables to include in the model:</label><br>
-		<input type="checkbox" id="populationCheckbox" checked > Population <br>
-		<input type="checkbox" id="areaCheckbox" checked> Area (sq miles)<br>
-		<input type="checkbox" id="age18to24Checkbox" checked> Percent 18 to 24<br>
-		<input type="checkbox" id="maleCheckbox" checked> Percent Male<br>
-		<input type="checkbox" id="liquorCheckbox" checked> Liquor Licenses (per area)<br>
-		<input type="checkbox" id="faithOrgsCheckbox" checked> Faith Organizations (per area)<br>
-		<input type="checkbox" id="parksCheckbox" checked> Parks (per area)<br>
-		<input type="checkbox" id="resValueCheckbox" checked> Avg Residential Value<br><br><br>
+		<label>Select variables to include in the model:</label>
+		<br>
+		<input type="checkbox" id="populationCheckbox" checked> Population
+		<br>
+		<input type="checkbox" id="areaCheckbox" checked> Area (sq miles)
+		<br>
+		<input type="checkbox" id="age18to24Checkbox" checked> Percent 18 to 24
+		<br>
+		<input type="checkbox" id="maleCheckbox" checked> Percent Male
+		<br>
+		<input type="checkbox" id="liquorCheckbox" checked> Liquor Licenses (per area)
+		<br>
+		<input type="checkbox" id="faithOrgsCheckbox" checked> Faith Organizations (per area)
+		<br>
+		<input type="checkbox" id="parksCheckbox" checked> Parks (per area)
+		<br>
+		<input type="checkbox" id="resValueCheckbox" checked> Avg Residential Value
+		<br>
+		<br>
+		<br>
 
-	<div>
-		<table class="table" width="900">
-			<thead>
-				<tr>
-					<th>Variable</th>
-					<th>Coefficient</th>
-				</tr>
-			</thead>
-			<tbody>
+		<div>
+			<table class="table" width="900">
+				<thead>
+					<tr>
+						<th>Variable</th>
+						<th>Coefficient</th>
+					</tr>
+				</thead>
+				<tbody>
 
-			</tbody>
-		</table>
-	</div>
+				</tbody>
+			</table>
+		</div>
 
-	<script type="text/javascript " src="src/web/js/bundle.js "></script>
-	<footer>
-		<p> Made by Marielle Billig, Jim Reilly, and Katy Weathington</p>
-		<p>View this project on
-			<a href=https://github.com/mbillig/MKECrimeModel>Github</a>
-		</p>
+		<script type="text/javascript " src="src/web/js/bundle.js "></script>
+		<footer>
+			<p> Made by Marielle Billig, Jim Reilly, and Katy Weathington</p>
+			<p>View this project on
+				<a href=https://github.com/mbillig/MKECrimeModel>Github</a>
+			</p>
 
-	</footer>
+		</footer>
 </body>
 
 </html>

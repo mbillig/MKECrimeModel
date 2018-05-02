@@ -12,6 +12,8 @@ const yPadding = 80;
 // Define variables outside the scope of the callback function.
 var crimeData;
 
+var axesExist = false;
+
 //format a float error as a percentage string
 const formatPercentage = (x) => {
     var option = {
@@ -111,16 +113,17 @@ const plotActualCrimePerPopulationDensity = (data) => {
     var datapoints = vis.selectAll('circle')
         .data(data, (d) => { return d; })
 
-    var modeled = datapoints.enter()
+    var modeled = datapoints.enter() //add modeled data points
         .append('circle')
         .attr('r', 2.5)
         .attr('cx', (d) => disctrictNumScale(d.SortedOrder))
         .attr('cy', (d) => crimeScale(d.ModeledCrime))
+        .attr("class", "model")
         .style("fill", "FFA500")
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide)
 
-    var actuals = datapoints.enter()
+    var actuals = datapoints.enter() //add actual data points
         .append('circle')
         .attr("cx", (d) => disctrictNumScale(d.SortedOrder))
         .attr("cy", (d) => crimeScale(d.ActualCrime))
@@ -129,7 +132,7 @@ const plotActualCrimePerPopulationDensity = (data) => {
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide)
 
-    var errorBars = datapoints.enter()
+    var errorBars = datapoints.enter() //add error lines
         .append("line")
         .style("stroke", "gray") // Add a color
         .attr("x1", (d) => disctrictNumScale(d.SortedOrder))
@@ -137,8 +140,10 @@ const plotActualCrimePerPopulationDensity = (data) => {
         .attr("x2", (d) => disctrictNumScale(d.SortedOrder))
         .attr("y2", (d) => crimeScale(d.ModeledCrime));
 
-
-    plotAxes(disctrictNumScale, crimeScale);
+    if (!axesExist) {
+        plotAxes(disctrictNumScale, crimeScale);
+        axesExist = true;
+    }
 }
 
 const addCoefficientsToTable = (data) => {
@@ -165,7 +170,8 @@ const addCoefficientsToTable = (data) => {
 }
 
 function update() {
-    svg.selectAll("*").remove();
+    svg.selectAll("circle").filter(".model").remove();
+    svg.selectAll("line").remove();
     d3.csv("data/AggregateData/AggregateRelativePerArea.csv", parseLineRelative, function (error, data) {
         // console.log(data);
         let filteredData = data.filter(d =>
@@ -197,17 +203,12 @@ function update() {
         // console.log(modeledCrime);
 
         let toPlot = crimeMatrix.map((district, i) => {
-            // TODO: THIS IS A PROBLEM IF POPULATION OR AREA ARE DESELECTED FROM THE CHECKBOXES
-            let population = district[1];
-            let areaSqMi = district[2];
             var nCols = district.length - 1;
             let actual = district[nCols];
             let predicted = modeledCrime[i];
             // console.log(modeledCrime);
             let error = ((predicted - actual) / actual);
             return {
-                Population: population,
-                Area: areaSqMi,
                 ActualCrime: actual,
                 ModeledCrime: modeledCrime[i],
                 Error: error
