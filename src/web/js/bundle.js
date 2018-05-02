@@ -231,9 +231,12 @@ function update() {
 
         let averageError = 0;
         toPlot.forEach((district) => {
-            averageError += district.Error;
+            averageError += Math.abs(district.Error);
         });
         averageError /= toPlot.length;
+	let sigfigError= averageError.toFixed(5);
+
+	d3.select("#errorBox").text("Average Absolute Error: " + sigfigError);
 
         console.log(averageError);
 
