@@ -60,6 +60,25 @@ const calculatedModeledCrime = (crimeMatrix, betas) => {
     return model;
 };
 
+const calculateConfidenceIntervals = (crimeMatrix, model, observedIndex) => {
+	var nPredictorCols = crimeMatrix[0].length - 1;
+	var iActualsCol = crimeMatrix[0].length;
+	var n = crimeMatrix.length;
+	var criticalValue = 1.96;
+	let y = math.eval('crimeMatrix[:, ' + iActualsCol + ']', { crimeMatrix });
+	y = [].concat.apply([], y);
+	let A = math.eval('crimeMatrix[:, 1:' + nPredictorCols + ']', { crimeMatrix });
+	let residuals = math.eval('model - y', {model, y});
+	let MSres = math.eval('sum(residuals * residuals) / (n - 2)', {residuals, n})
+	let unweighted = math.eval(`A[` + observedIndex + `,:] * inv(A' * A) * A[` + observedIndex + `,:]'`, {A});
+	unweighted = [].concat.apply([], unweighted)[0];
+	let standardError = math.eval('sqrt(MSres * unweighted)', {MSres, unweighted});
+	let minConf = y[observedIndex] - criticalValue*standardError;
+	let maxConf = y[observedIndex] + criticalValue*standardError;
+	let confInterval = [minConf, y[observedIndex], maxConf];
+	return confInterval;
+};
+
 const calculatePopulationDensity = (district) => { return district.Population / district.Area };
 
 const plotAxes = (xScale, yScale) => {
@@ -223,6 +242,10 @@ function update() {
 		console.log(iMax);
 
         let modeledCrime = calculatedModeledCrime(crimeMatrix, betas).map(d => { return parseFloat(d) });
+		
+		// example usage of confidence interval calucation for row 1 
+		let confInterval = calculateConfidenceIntervals(crimeMatrix, modeledCrime, 1);
+		console.log(confInterval);
 
         let toPlot = crimeMatrixDistNum.map((district, i) => {
             var nCols = district.length - 1;
