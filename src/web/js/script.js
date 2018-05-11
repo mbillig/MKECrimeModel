@@ -102,7 +102,7 @@ const plotActualCrimePerPopulationDensity = (data) => {
 
     var tip = d3.tip()
         .attr('class', 'd3-tip')
-        .html(function (d) { return formatPercentage(d.Error) })
+        .html(function (d) { return "Dist Num: " + d.DistrictNumber + "<br>" + "Error: " + formatPercentage(d.Error) })
         .direction('n')
         .offset([-3, 0])
 
@@ -188,7 +188,7 @@ function update() {
 		//console.log(selectedMeans);
 
         if (!d3.select("#populationCheckbox").property("checked")) { filteredData.forEach(function (v) { delete v.Population }); }
-		if(!d3.select("#areaCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.Area }); }
+		if (!d3.select("#areaCheckbox").property("checked")){ filteredData.forEach(function(v){ delete v.Area }); }
         if (!d3.select("#age18to24Checkbox").property("checked")) { filteredData.forEach(function (v) { delete v.Pop18To24 }); }
         if (!d3.select("#maleCheckbox").property("checked")) { filteredData.forEach(function (v) { delete v.PopulationMale }); }
         if (!d3.select("#liquorCheckbox").property("checked")) { filteredData.forEach(function (v) { delete v.LiquorLisc }); }
@@ -200,7 +200,8 @@ function update() {
         //console.log(filteredData);
 
         var nCols = filteredData[0].length
-        let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, nCols) });
+		let crimeMatrix = filteredData.map(d => { return Object.values(d).slice(2, nCols) });
+		let crimeMatrixDistNum = filteredData.map(d => { return Object.values(d) });
         let betas = solveLeastSquaresCoefficients(crimeMatrix);
         let keys = Object.getOwnPropertyNames(filteredData[0]);
         keys.shift(); // get rid of district number
@@ -223,13 +224,15 @@ function update() {
 
         let modeledCrime = calculatedModeledCrime(crimeMatrix, betas).map(d => { return parseFloat(d) });
 
-        let toPlot = crimeMatrix.map((district, i) => {
+        let toPlot = crimeMatrixDistNum.map((district, i) => {
             var nCols = district.length - 1;
             let actual = district[nCols];
-            let predicted = modeledCrime[i];
+			let predicted = modeledCrime[i];
+			let distNum = district[0];
             // console.log(modeledCrime);
             let error = ((predicted - actual) / actual);
             return {
+				DistrictNumber: distNum,
                 ActualCrime: actual,
                 ModeledCrime: modeledCrime[i],
                 Error: error
