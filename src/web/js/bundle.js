@@ -239,8 +239,8 @@ function update() {
 
 
         let sortedData = toPlot.sort((d1, d2) => {
-			return d1.Area > d2.Area ? 1 //concat to end
-				: d1.Area < d2.Area ? -1 //prepend to start
+			return d1.ModeledCrime > d2.ModeledCrime ? 1 //concat to end
+				: d1.ModeledCrime < d2.ModeledCrime ? -1 //prepend to start
                     : 0; //equal
         });
         let sortedDataWithIndex = toPlot.map((district, i) => {
@@ -261,7 +261,7 @@ function update() {
         plotActualCrimePerPopulationDensity(sortedDataWithIndex);
         let tableData = keys.map((key, index) => { return { Key: key, Value: betas[index] }; });
 		addCoefficientsToTable(tableData);
-		d3.select("#errorBox").text("Average Error: " + averageError.toFixed(3))
+		d3.select("#errorBox").text("Average Error: " + averageError)
     })
 }
 
