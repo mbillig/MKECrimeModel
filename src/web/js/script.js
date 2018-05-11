@@ -260,7 +260,7 @@ function update() {
         plotActualCrimePerPopulationDensity(sortedDataWithIndex);
         let tableData = keys.map((key, index) => { return { Key: key, Value: betas[index] }; });
 		addCoefficientsToTable(tableData);
-		d3.select("#errorBox").text("Average Error: " + averageError)
+		d3.select("#errorBox").text("Average Error: " + formatPercentage(averageError))
     })
 }
 
